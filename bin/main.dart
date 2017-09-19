@@ -3,9 +3,8 @@
 import 'dart:math';
 import 'package:PeterProblem8/PeterProblem8.dart' as PeterProblem8;
 
-//main(List<String> arguments) {
-//  print('Hello world: ${PeterProblem8.calculate()}!');
-//}
+// Obviously wrong if you look at how this counts.
+
 main(List<String> arguments) {
   int minBase = 10;
   int maxBase = 10;
