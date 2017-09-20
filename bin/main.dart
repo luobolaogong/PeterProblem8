@@ -3,10 +3,10 @@ import 'dart:math';
 // Obviously wrong if you look at how this counts.
 
 main(List<String> arguments) {
-  int minBase = 2;
-  int maxBase = 36;
-  int minNDigits = 1;
-  int maxNDigits = 8;
+  int minBase = 10;
+  int maxBase = 11;
+  int minNDigits = 4;
+  int maxNDigits = 6;
   int minValue = 1;
 
   print("Starting at " + (new DateTime.now()).toString());
@@ -22,23 +22,25 @@ main(List<String> arguments) {
       for (int value = minValue; value <= maxValue; value++) {
         //print("Base $base, digits $nDigits: ${tedNumber.toDigitsStringNDigits()}:${tedNumber.toReversedDigitsStringNDigits()}");
         tedNumber.increment();
-        Solution solution = tedNumber.getSolution();
-        if (solution != null) {
-          //print("Base $base, digits $nDigits: ${solution.forwardNumber}:${solution.reversedNumber} multiple: ${solution.multiple}");
+        //Solution solution = tedNumber.getSolution();
+        //bool hasSolution = tedNumber.hasSolution();
+//        if (solution != null) {
+//          print(
+//              "Base $base, digits:${nDigits}, "
+//                  "n: ${solution.forwardNumber.toRadixString(base)}, "
+//                  "m: ${solution.reversedNumber.toRadixString(base)},  "
+//                  "${solution.multiple.toRadixString(base)} * "
+//                  "${solution.forwardNumber.toRadixString(base)} == ${solution
+//                  .reversedNumber.toRadixString(base)}");
+//        }
+        if (tedNumber.hasSolution()) {
           print(
               "Base $base, digits:${nDigits}, "
-                  "n: ${solution.forwardNumber.toRadixString(base)}, "
-                  "m: ${solution.reversedNumber.toRadixString(base)},  "
-                  "${solution.multiple.toRadixString(base)} * "
-                  "${solution.forwardNumber.toRadixString(base)} == ${solution
-                  .reversedNumber.toRadixString(base)}");
-
-//        Solution solution = tedNumber.solve();
-//        if (tedNumber.hasSolution()) {
-//          String multiple = tedNumber.multiple;
-//          String forwardNumber = tedNumber.forwardNumber;
-//          String reversedNumber = tedNumber.reversedNumber;
-//        }
+                  "n: ${tedNumber.value.toRadixString(base)}, "
+                  "m: ${tedNumber.reversedValue.toRadixString(base)},  "
+                  "${tedNumber.multiple.toRadixString(base)} * "
+                  "${tedNumber.value.toRadixString(base)} == "
+                  "${tedNumber.reversedValue.toRadixString(base)}");
         }
       }
       stopWatch.stop();
@@ -51,12 +53,16 @@ main(List<String> arguments) {
   print("Done");
 }
 
-class Solution {
-  int multiple;
-  int forwardNumber;
-  int reversedNumber;
-  Solution(this.forwardNumber, this.reversedNumber, this.multiple);
-}
+/**
+ * This class merely holds the solution found so it can be returned by some function.
+ */
+//class Solution {
+//  int multiple;
+//  int forwardNumber;
+//  int reversedNumber;
+//  Solution(this.forwardNumber, this.reversedNumber, this.multiple);
+//}
+
 // This class holds the number to be used to compare against its (in base) reversed form,
 // and methods to reverse and print them.  When printed, they need to be in the
 // specified base.
@@ -90,94 +96,126 @@ class TedNumber {
   int base;
   int nDigits;
   int value;
+  int reversedValue;
+  int multiple;
   List<String> digits; // do we want to store this and update it every time the number changes?
 
   TedNumber(int base, int nDigits, int value) {
+    //print("In constructor");
     this.base = base;
     this.nDigits = nDigits;
     this.value = value;
     this.digits = new List<String>.filled(this.nDigits, '0'); // want this?
-    updateDigitsList();
+    updateDigits(); // update "digits" with "value"
   }
 
-  // What do we want here, say nDigits is 4, and value is 3?  "0011"? "0011:1100" ?
-  // Hey this is for printing the class, not value
-  String toString() {
-    return toDigitsStringNDigits();
-  }
-
+  /**
+   * Increment "value", and update the digits.
+   */
   increment() {
+    //print("In increment()");
     value++;
-    updateDigitsList();
+    updateDigits();
   }
-
-  updateDigitsList() {
+  /**
+   * Update the digits list by converting "value" to a string in the base,
+   * then transfer those characters into "digits" list.
+   */
+  updateDigits() {
+    //print("In updateDigits()");
     String digitsStringValue = value.toRadixString(base);
-    //List<String> digits = new List<String>.filled(nDigits, '0');
-    if (digitsStringValue.length > nDigits) { // the number in the base is greater than the limit, so return "000" or whatever
+    if (digitsStringValue.length > nDigits) {
       return; // not sure this is best
     }
-    //List<String> digits = new List<String>.filled(nDigits, '0');
-    // What we want to do is take a digits of ["0", "1", "1"] (for 3)
-    //for (int ctr = digitsStringValue.length - 1; ctr >= 0; ctr--) {
     int nCharsValueInBase = digitsStringValue.length;
     for (int ctr = 0; ctr < nCharsValueInBase; ctr++) {
-      //for (int ctr = 0; ctr < digitsStringValue.length; ctr++) {
-      digits[nDigits - nCharsValueInBase + ctr] = digitsStringValue[ctr]; // this looks backwards, as in 3 = [1, 1, 0]
+      digits[nDigits - nCharsValueInBase + ctr] = digitsStringValue[ctr];
     }
+    //look for solution
     //return;
   }
 
-  String toDigitsStringNDigits() {
-    //List<String> digits = toDigitsList();
-    //String stringNDigits = digitsToStringNDigits(digits);
-    String stringNDigits = getDigitsToStringNDigits();
-    return stringNDigits; // this is a string representation of digits, forced to be nDigits in size, and can have leading 0's.
+  /**
+   * Check if the current (positive integer) value is related to its reversed value
+   * by a whole multiple (other than 1) and that both the value and its reverse (as
+   * represented in the specified base) are the right number of digits (no leading 0's).
+   * If so, then there's a solution, and return it.
+   */
+  //Solution getSolution() {
+  bool hasSolution() {
+    //print("In getSolution");
+    if (digits[0] == "0" || digits[nDigits - 1] == "0") {
+      //print("Skipping values not the right length.");
+      return false;
+    }
+    //List<String> reversedDigits = new List<String>.from(digits.reversed);
+    //int reversedValue = reversedDigits.................................
+//    if (digits == reversedDigits) { // does this work? No, fix this later
+//      print("Skipping values that are the same back and forward.");
+//      return null;
+//    }
+    //int reversedValue = getReversedValue();
+    reversedValue = getReversedValue();
+    int mDivNRemainder = reversedValue % value;
+    if (mDivNRemainder == 0) {
+      //int wholeNumberMultiple = reversedValue ~/ value;
+      multiple = reversedValue ~/ value;
+      if (multiple != 1) {
+        return true;
+      }
+      // This slows things down.  Maybe just update the values in this class
+      // and return true or false
+      //return new Solution(value, reversedValue, wholeNumberMultiple);
+      //return true;
+    }
+    return false;
   }
 
-  String toReversedDigitsStringNDigits() {
+  //
+  // This reverses "digits" and calls a method to get a String representation
+  // and then returns that.
+  //
+  String reverseDigitsAsString() {
+    //print("In toReversedDigitsStringNDigits()");
     //List<String> digits = toDigitsList();
     Iterable digitsReversedIterable = digits.reversed;
     List<String> reversedDigits = new List<String>.from(digitsReversedIterable);
-    String reversedStringNDigits = digitsToStringNDigits(reversedDigits);
+    String reversedStringNDigits = digitsToString(reversedDigits);
     return reversedStringNDigits;
   }
 
-  // This returns a List<String> representing the value, with current size and base.
-  // Rather than return it, should we just store it in this class, and just update
-  // it rather than create a new List<String>?  And if so, should that be done at
-  // every change to value?  I think it would be faster to update than create new.
-//  List<String> toDigitsList() {
-//    String digitsStringValue = value.toRadixString(base);
-//    List<String> digits = new List<String>.filled(nDigits, '0');
-//    if (digitsStringValue.length > nDigits) { // the number in the base is greater than the limit, so return "000" or whatever
-//      return digits; // not sure this is best
-//    }
-//    //List<String> digits = new List<String>.filled(nDigits, '0');
-//    // What we want to do is take a digits of ["0", "1", "1"] (for 3)
-//    //for (int ctr = digitsStringValue.length - 1; ctr >= 0; ctr--) {
-//    int nCharsValueInBase = digitsStringValue.length;
-//    for (int ctr = 0; ctr < nCharsValueInBase; ctr++) {
-//      //for (int ctr = 0; ctr < digitsStringValue.length; ctr++) {
-//      digits[nDigits - nCharsValueInBase + ctr] = digitsStringValue[ctr]; // this looks backwards, as in 3 = [1, 1, 0]
-//    }
-//    return digits;
-//  }
+  //
+  // Loops through provided "digits" and converts to a string of equal length.
+  // Thus there can be leading 0's.
+  // Only called by reverseDigitsAsString.
+  //
+  String digitsToString(List<String> digits) {
+    //print("In digitsToStringNDigits(digits)");
 
-  String getDigitsToStringNDigits() { // converts digits to a string of all nDigits, so can be leading 0's
-    String stringNDigits = digitsToStringNDigits(digits);
-    return stringNDigits;
-  }
-
-  String digitsToStringNDigits(List<String> digits) { // converts digits to a string of all nDigits, so can be leading 0's
     StringBuffer resultStringBuffer = new StringBuffer();
     for (int ctr = 0; ctr < digits.length; ctr++) {
       String digit = digits.elementAt(ctr);
-      resultStringBuffer.write(digit); // this writes left to right
+      resultStringBuffer.write(digit); // writes left to right
     }
     String stringNDigits = resultStringBuffer.toString();
     return stringNDigits;
   }
+
+  //
+  // Calls reverseDigitsAsString and then parses into an int, and returns it.
+  // Called by getSolution()
+  //
+  int getReversedValue() {
+    //print("In getReversedValue");
+
+    String reverseString = reverseDigitsAsString();
+    int reverseValue = int.parse(reverseString, radix:this.base);
+    return reverseValue;
+  }
+
+
+
+
 
 
 
@@ -197,33 +235,56 @@ class TedNumber {
     return digits.reversed; // docs say this is an Iterable<E>.  Can that be a List<String>???  If so, why do the more complicated new whatever below?
   }
 
+// What do we want here, say nDigits is 4, and value is 3?  "0011"? "0011:1100" ?
+// Hey this is for printing the class, not value
+//  String toString() {
+//    print("In toString()");
+//    return toDigitsStringNDigits();
+//  }
 
-  int getReversedValue() {
-    String reverseString = toReversedDigitsStringNDigits();
-    int reverseValue = int.parse(reverseString, radix:this.base);
-    return reverseValue;
-  }
 
+//
+// This calls another function to get a string representation of "digits",
+// and then returns that.  So, why even call this function?
+//
+//  String toDigitsStringNDigits() {
+//    print("In toDigitsStringNDigits()");
+//    //List<String> digits = toDigitsList();
+//    //String stringNDigits = digitsToStringNDigits(digits);
+//    String stringNDigits = getDigitsToStringNDigits();
+//    return stringNDigits; // this is a string representation of digits, forced to be nDigits in size, and can have leading 0's.
+//  }
 
+// This returns a List<String> representing the value, with current size and base.
+// Rather than return it, should we just store it in this class, and just update
+// it rather than create a new List<String>?  And if so, should that be done at
+// every change to value?  I think it would be faster to update than create new.
+//  List<String> toDigitsList() {
+//    String digitsStringValue = value.toRadixString(base);
+//    List<String> digits = new List<String>.filled(nDigits, '0');
+//    if (digitsStringValue.length > nDigits) { // the number in the base is greater than the limit, so return "000" or whatever
+//      return digits; // not sure this is best
+//    }
+//    //List<String> digits = new List<String>.filled(nDigits, '0');
+//    // What we want to do is take a digits of ["0", "1", "1"] (for 3)
+//    //for (int ctr = digitsStringValue.length - 1; ctr >= 0; ctr--) {
+//    int nCharsValueInBase = digitsStringValue.length;
+//    for (int ctr = 0; ctr < nCharsValueInBase; ctr++) {
+//      //for (int ctr = 0; ctr < digitsStringValue.length; ctr++) {
+//      digits[nDigits - nCharsValueInBase + ctr] = digitsStringValue[ctr]; // this looks backwards, as in 3 = [1, 1, 0]
+//    }
+//    return digits;
+//  }
 
-  Solution getSolution() {
-    if (digits[0] == "0" || digits[nDigits - 1] == "0") {
-      //print("Skipping values not the right length.");
-      return null;
-    }
-    List<String> reversedDigits = new List<String>.from(digits.reversed);
-    //int reversedValue = reversedDigits.................................
-    if (digits == reversedDigits) { // does this work? No, fix this later
-      print("Skipping values that are the same back and forward.");
-      return null;
-    }
-    int reversedValue = getReversedValue();
-    int mDivNRemainder = reversedValue % value;
-    if (mDivNRemainder == 0) {
-      int wholeNumberMultiple = reversedValue ~/ value;
-      if (wholeNumberMultiple == 1) {
-        return null;
-      }
+//
+// Merely calls digitsToString(digits) and returns the result
+//
+//  String getDigitsToString() { // converts digits to a string of all nDigits, so can be leading 0's
+//    //print("In getDigitsToStringNDigits()");
+//    String stringNDigits = digitsToString(digits);
+//    return stringNDigits;
+//  }
+
 //      print(
 //          "Base $base, digits:${getNDigits()}, n: ${odometer
 //              .getValue()
@@ -232,9 +293,7 @@ class TedNumber {
 //              base)} * ${getValue().toRadixString(
 //              base)} == ${odometer
 //              .getReversedValue().toRadixString(base)}");
-      //continue;
-      return new Solution(value, reversedValue, wholeNumberMultiple);
-    }
-      return null;
-  }
+//continue;
+
+
 }
