@@ -3,21 +3,16 @@ import 'dart:math';
 // Obviously wrong if you look at how this counts.
 
 main(List<String> arguments) {
-  int minBase = 16;
+  int minBase = 2;
   int maxBase = 16;
   int minNDigits = 2;
-  int maxNDigits = 2;
-  int minValue = 1;
-  int maxValue = 255;
-  //int maxValue = ((pow(base, nDigits)) / 2.0).ceil();
+  int maxNDigits = 4;
 
   for (int base = minBase; base <= maxBase; base++) {
     for (int nDigits = minNDigits; nDigits <= maxNDigits; nDigits++) {
-//      int absoluteMaxValue = pow(base, nDigits);
-//      if (absoluteMaxValue > maxValue) {
-//        maxValue = maxValue;
-//      }
-//      maxValue =
+      int minValue = 1;
+      //int maxValue = ((pow(base, nDigits)) / 2.0).ceil();
+      int maxValue = pow(base, nDigits) - 1;
       for (int value = minValue; value <= maxValue; value++) {
         TedNumber tedNumber = new TedNumber(base, nDigits, value);
         print("Base $base, digits $nDigits: ${tedNumber.toForward()}:${tedNumber.toReversed()}");
