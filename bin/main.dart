@@ -1,21 +1,24 @@
-// Copyright (c) 2017, rob. All rights reserved. Use of this source code
-// is governed by a BSD-style license that can be found in the LICENSE file.
 import 'dart:math';
-import 'package:PeterProblem8/PeterProblem8.dart' as PeterProblem8;
 
 // Obviously wrong if you look at how this counts.
 
 main(List<String> arguments) {
-  int minBase = 10;
-  int maxBase = 10;
+  int minBase = 16;
+  int maxBase = 16;
   int minNDigits = 2;
   int maxNDigits = 2;
+  int minValue = 1;
+  int maxValue = 255;
   //int maxValue = ((pow(base, nDigits)) / 2.0).ceil();
 
   for (int base = minBase; base <= maxBase; base++) {
     for (int nDigits = minNDigits; nDigits <= maxNDigits; nDigits++) {
-      int maxValue = pow(base, nDigits);
-      for (int value = 0; value < maxValue; value++) {
+//      int absoluteMaxValue = pow(base, nDigits);
+//      if (absoluteMaxValue > maxValue) {
+//        maxValue = maxValue;
+//      }
+//      maxValue =
+      for (int value = minValue; value <= maxValue; value++) {
         TedNumber tedNumber = new TedNumber(base, nDigits, value);
         print("Base $base, digits $nDigits: ${tedNumber.toForward()}:${tedNumber.toReversed()}");
       }
@@ -24,7 +27,7 @@ main(List<String> arguments) {
   print("Done");
 }
 
-// This class holds the number to be used to compare against its reversed form,
+// This class holds the number to be used to compare against its (in base) reversed form,
 // and methods to reverse and print them.  When printed, they need to be in the
 // specified base.
 //
@@ -85,12 +88,16 @@ class TedNumber {
   List<String> toDigits() {
     String digitsStringValue = value.toRadixString(base);
     List<String> digits = new List<String>.filled(nDigits, '0');
-    if (digitsStringValue.length > nDigits) {
-      return digits;
+    if (digitsStringValue.length > nDigits) { // the number in the base is greater than the limit, so return "000" or whatever
+      return digits; // not sure this is best
     }
     //List<String> digits = new List<String>.filled(nDigits, '0');
-    for (int ctr = digitsStringValue.length - 1; ctr >= 0; ctr--) {
-      digits[ctr] = digitsStringValue[ctr]; // this looks backwards, as in 3 = [1, 1, 0]
+    // What we want to do is take a digits of ["0", "1", "1"] (for 3)
+    //for (int ctr = digitsStringValue.length - 1; ctr >= 0; ctr--) {
+    int nCharsValueInBase = digitsStringValue.length;
+    for (int ctr = 0; ctr < nCharsValueInBase; ctr++) {
+      //for (int ctr = 0; ctr < digitsStringValue.length; ctr++) {
+      digits[nDigits - nCharsValueInBase + ctr] = digitsStringValue[ctr]; // this looks backwards, as in 3 = [1, 1, 0]
     }
     return digits;
   }
@@ -98,10 +105,10 @@ class TedNumber {
   String digitsToString(List<String> digits) {
     //Probably a better way to do this
     StringBuffer resultString = new StringBuffer();
-    //for (int ctr = 0; ctr < this.nDigits; ctr++) {
-    for (int ctr = this.nDigits - 1; ctr >= 0; ctr--) {
+    for (int ctr = 0; ctr < this.nDigits; ctr++) {
+    //for (int ctr = this.nDigits - 1; ctr >= 0; ctr--) {
       String digit = digits.elementAt(ctr);
-      resultString.write(digit);
+      resultString.write(digit); // this writes left to right
     }
     return resultString.toString();
   }
