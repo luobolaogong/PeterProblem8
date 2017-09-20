@@ -3,19 +3,21 @@ import 'dart:math';
 // Obviously wrong if you look at how this counts.
 
 main(List<String> arguments) {
-  int minBase = 2;
-  int maxBase = 16;
+  int minBase = 10;
+  int maxBase = 10;
   int minNDigits = 2;
-  int maxNDigits = 4;
+  int maxNDigits = 2;
 
   for (int base = minBase; base <= maxBase; base++) {
     for (int nDigits = minNDigits; nDigits <= maxNDigits; nDigits++) {
       int minValue = 1;
       //int maxValue = ((pow(base, nDigits)) / 2.0).ceil();
       int maxValue = pow(base, nDigits) - 1;
+      TedNumber tedNumber = new TedNumber(base, nDigits, minValue);
       for (int value = minValue; value <= maxValue; value++) {
-        TedNumber tedNumber = new TedNumber(base, nDigits, value);
+        // TedNumber tedNumber = new TedNumber(base, nDigits, value);
         print("Base $base, digits $nDigits: ${tedNumber.toForward()}:${tedNumber.toReversed()}");
+        tedNumber.increment();
       }
     }
   }
@@ -70,6 +72,13 @@ class TedNumber {
     return toForward();
   }
 
+//  operator +(int more) {
+//    value += more;
+//  }
+
+  increment() {
+    value++;
+  }
   // We're storing the digits in a array/list of String values, and I prefer to think
   // of the list as going from left to right starting with position 0.  That is, if
   // the number is 3, in base 2 and there are supposed to be 3 digits, then
@@ -80,7 +89,7 @@ class TedNumber {
     return digits.reversed;
   }
 
-  List<String> toDigits() {
+  List<String> toDigits() { // change to valueToDigits()
     String digitsStringValue = value.toRadixString(base);
     List<String> digits = new List<String>.filled(nDigits, '0');
     if (digitsStringValue.length > nDigits) { // the number in the base is greater than the limit, so return "000" or whatever
@@ -97,7 +106,7 @@ class TedNumber {
     return digits;
   }
 
-  String digitsToString(List<String> digits) {
+  String digitsToString(List<String> digits) { // converts digits to a string of all nDigits, so can be leading 0's
     //Probably a better way to do this
     StringBuffer resultString = new StringBuffer();
     for (int ctr = 0; ctr < this.nDigits; ctr++) {
@@ -105,18 +114,21 @@ class TedNumber {
       String digit = digits.elementAt(ctr);
       resultString.write(digit); // this writes left to right
     }
-    return resultString.toString();
+    String something = resultString.toString();
+    return something;
   }
 
   String toForward() {
     List<String> digits = toDigits();
-    return digitsToString(digits);
+    String something = digitsToString(digits);
+    return something; // this is a string representation of digits, forced to be nDigits in size, and can have leading 0's.
 
 //    return digits.toString();
   }
 
   String toReversed() {
     List<String> digits = new List<String>.from(toDigits().reversed);
-    return digitsToString(digits);
+    String something = digitsToString(digits);
+    return something;
   }
 }
